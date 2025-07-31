@@ -6,669 +6,1215 @@
     <title>Bisiklet Performansı Optimizasyonu - Bilimsel Analiz</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .chart-container { height: 400px; }
-         {
-            * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
-            body { margin: 0; }
+        :root {
+            --primary: #6C5CE7;
+            --secondary: #00B8D4;
+            --accent: #FF6B9D;
+            --success: #00E676;
+            --warning: #FFD600;
+            --bg-dark: #0F0F23;
+            --surface: #1A1A2E;
+            --text-light: #FFFFFF;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #16213E 100%);
+            color: var(--text-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        
+        .header.scrolled {
+            padding: 0.5rem 0;
+            background: rgba(15, 15, 35, 0.98);
+        }
+        
+        .header.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .header-content {
+            transition: all 0.3s ease;
+        }
+        
+        .header.scrolled .header-title {
+            font-size: 1.5rem;
+        }
+        
+        .header.scrolled .header-subtitle {
+            display: none;
+        }
+        
+        .main-content {
+            margin-top: 140px;
+            padding-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                margin-top: 120px;
+                padding-top: 1rem;
+            }
+            
+            .header.scrolled {
+                padding: 0.25rem 0;
+            }
+            
+            .header.scrolled .main-content {
+                margin-top: 80px;
+            }
+        }
+        
+        .card {
+            background: linear-gradient(135deg, var(--surface) 0%, rgba(26, 26, 46, 0.8) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .chart-container {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .bar-label {
+            min-width: 120px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .bar-visual {
+            flex: 1;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            position: relative;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .bar-value {
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .pie-chart {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--primary) 0deg 306deg,
+                var(--secondary) 306deg 342deg,
+                var(--accent) 342deg 360deg
+            );
+            position: relative;
+            margin: 2rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .pie-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-weight: bold;
+        }
+        
+        .line-chart {
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .line-path {
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            right: 10%;
+            bottom: 20%;
+            background: linear-gradient(
+                45deg,
+                transparent 40%,
+                var(--accent) 42%,
+                var(--accent) 44%,
+                transparent 46%
+            );
+            clip-path: polygon(0 80%, 20% 60%, 40% 40%, 60% 30%, 80% 20%, 100% 10%, 100% 100%, 0% 100%);
+        }
+        
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 1rem;
+            position: relative;
+        }
+        
+        .progress-ring-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 0deg var(--progress-deg, 270deg), rgba(255, 255, 255, 0.1) var(--progress-deg, 270deg) 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .progress-ring-center {
+            width: 80px;
+            height: 80px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .tip-box {
+            background: linear-gradient(135deg, var(--accent) 0%, rgba(255, 107, 157, 0.2) 100%);
+            border-left: 4px solid var(--accent);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.2);
+        }
+        
+        .tip-icon {
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+        
+        .reference-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .toggle-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .toggle-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(108, 92, 231, 0.3);
+        }
+        
+        .toggle-button.active {
+            background: linear-gradient(135deg, var(--success) 0%, var(--accent) 100%);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                padding: 1.5rem;
+                margin: 1rem 0;
+            }
+            
+            .bar-label {
+                min-width: 80px;
+                font-size: 0.8rem;
+            }
+            
+            .pie-chart {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .progress-ring {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .bar-visual {
+                height: 35px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-
-<!-- Header -->
-<header class="gradient-bg text-white py-12">
-    <div class="container mx-auto px-4">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">
-                <i class="fas fa-bicycle mr-3"></i>Bisiklet Performansı Optimizasyonu
-            </h1>
-            <p class="text-xl mb-6 opacity-90">Bilimsel Verilerle Desteklenmiş Kapsamlı Performans Rehberi</p>
-            <div class="bg-white bg-opacity-20 rounded-lg p-4 inline-block">
-                <p class="text-sm"><i class="fas fa-user-graduate mr-2"></i><strong>Hazırlayan:</strong> Ümit Emre Erdoğan</p>
-                <p class="text-sm mt-1"><i class="fas fa-calendar mr-2"></i>Son Güncelleme: 2025</p>
+<body>
+    <header class="header">
+        <div class="container mx-auto px-4 py-6 header-content">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold gradient-text mb-2 header-title">
+                    <i class="fas fa-bicycle mr-3"></i>
+                    Bisiklet Performansı Optimizasyonu
+                </h1>
+                <p class="text-lg text-gray-300 header-subtitle">
+                    Bilimsel Verilerle Desteklenmiş Kapsamlı Analiz
+                </p>
+                <p class="text-sm text-gray-400 mt-2">
+                    <i class="fas fa-user-edit mr-2"></i>
+                    Hazırlayan: <strong>Ümit Emre Erdoğan</strong>
+                </p>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<!-- Priority Warning -->
-<section class="bg-red-50 border-l-4 border-red-500 p-6 mx-4 my-8 rounded-r-lg">
-    <div class="flex items-start">
-        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-4 mt-1"></i>
-        <div>
-            <h3 class="text-lg font-semibold text-red-800 mb-2">ÖNEMLİ: İlk Öncelik</h3>
-            <p class="text-red-700 leading-relaxed">
-                Bisiklet alımında <strong>en kritik faktör</strong> kadronun vücut ölçülerinize uygun olması ve profesyonel <strong>bike fitting</strong> yapılmasıdır. 
-                Yanlış beden seçimi tüm performans optimizasyonlarını geçersiz kılar ve yaralanmalara neden olabilir. 
-                Aşağıdaki tüm analizler, doğru beden ve pozisyon ayarları yapıldıktan sonra uygulanmalıdır.
-            </p>
+    <main class="main-content container mx-auto px-4">
+        <!-- Bike Fitting Önemi -->
+        <div class="card fade-in">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold gradient-text mb-4">
+                    <i class="fas fa-tools mr-3"></i>
+                    ÖNCELİK #1: BİKE FİTTING VE BEDEN UYUMU
+                </h2>
+                <div class="bg-red-500 bg-opacity-20 border border-red-500 rounded-lg p-6 mb-6">
+                    <h3 class="text-xl font-bold text-red-300 mb-3">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        UYARI: Önce Bike Fitting!
+                    </h3>
+                    <p class="text-lg leading-relaxed">
+                        Bu analiz, bisikletinizin size mükemmel uyduğunu varsayar. 
+                        <strong>Yanlış beden veya pozisyon, tüm optimizasyonları geçersiz kılar.</strong>
+                        Önce profesyonel bike fitting yaptırın, sonra performans iyileştirmelerine odaklanın.
+                    </p>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
 
-<div class="container mx-auto px-4 py-8">
+        <!-- Ana Performans Dağılımı -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-chart-pie mr-3"></i>
+                Ana Performans Faktörleri Dağılımı
+            </h2>
+            <div class="text-center">
+                <div class="pie-chart">
+                    <div class="pie-center">
+                        <div class="text-lg font-bold">Toplam</div>
+                        <div class="text-sm text-gray-300">Etki</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="text-center">
+                        <div class="w-4 h-4 mx-auto mb-2 rounded" style="background: var(--primary);"></div>
+                        <div class="font-bold">Aerodinamik</div>
+                        <div class="text-2xl font-bold text-purple-400">85%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-4 h-4 mx-auto mb-2 rounded" style="background: var(--secondary);"></div>
+                        <div class="font-bold">Mekanik Verimlilik</div>
+                        <div class="text-2xl font-bold text-blue-400">10%</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-4 h-4 mx-auto mb-2 rounded" style="background: var(--accent);"></div>
+                        <div class="font-bold">Ağırlık (Düz zeminde)</div>
+                        <div class="text-2xl font-bold text-pink-400">5%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<!-- Performance Factors Comparison -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-tachometer-alt mr-2 text-blue-600"></i>Performans Faktörleri Karşılaştırması
-    </h2>
-    
-    <div class="grid lg:grid-cols-2 gap-8">
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 text-center">Profesyonel Bisikletçiler (400-450W)</h3>
+        <!-- Mod Seçici -->
+        <div class="card fade-in text-center">
+            <h3 class="text-xl font-bold mb-4">Bisikletçi Seviyenizi Seçin:</h3>
+            <div>
+                <button class="toggle-button active" onclick="switchMode('amateur')" id="amateurBtn">
+                    <i class="fas fa-user mr-2"></i>Amatör (200-300W)
+                </button>
+                <button class="toggle-button" onclick="switchMode('pro')" id="proBtn">
+                    <i class="fas fa-trophy mr-2"></i>Profesyonel (400-450W)
+                </button>
+            </div>
+        </div>
+
+        <!-- Sürüş Pozisyonları -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-body mr-3"></i>
+                Sürüş Pozisyonları - Watt Tasarrufu
+            </h2>
             <div class="chart-container">
-                <canvas id="proChart"></canvas>
+                <div class="bar-chart">
+                    <div class="bar-item">
+                        <div class="bar-label">Relaxed Hoods</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 0%; background: linear-gradient(135deg, #64748b 0%, #475569 100%);">
+                                <span class="bar-value">0W (Baseline)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Aero Hoods</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill amateur-data" style="width: 43%; background: linear-gradient(135deg, var(--warning) 0%, #f59e0b 100%);">
+                                <span class="bar-value">30W</span>
+                            </div>
+                            <div class="bar-fill pro-data" style="width: 57%; background: linear-gradient(135deg, var(--warning) 0%, #f59e0b 100%); display: none;">
+                                <span class="bar-value">46W</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Drops (Düz kol)</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill amateur-data" style="width: 36%; background: linear-gradient(135deg, var(--secondary) 0%, #0891b2 100%);">
+                                <span class="bar-value">25W</span>
+                            </div>
+                            <div class="bar-fill pro-data" style="width: 50%; background: linear-gradient(135deg, var(--secondary) 0%, #0891b2 100%); display: none;">
+                                <span class="bar-value">40W</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Drops (Bükümlü)</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill amateur-data" style="width: 50%; background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);">
+                                <span class="bar-value">35W</span>
+                            </div>
+                            <div class="bar-fill pro-data" style="width: 62%; background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%); display: none;">
+                                <span class="bar-value">50W</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Puppy Paws</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill amateur-data" style="width: 57%; background: linear-gradient(135deg, var(--accent) 0%, #ec4899 100%);">
+                                <span class="bar-value">40W</span>
+                            </div>
+                            <div class="bar-fill pro-data" style="width: 75%; background: linear-gradient(135deg, var(--accent) 0%, #ec4899 100%); display: none;">
+                                <span class="bar-value">60W</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Aero Bars/TT</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill amateur-data" style="width: 86%; background: linear-gradient(135deg, var(--success) 0%, #10b981 100%);">
+                                <span class="bar-value">60W</span>
+                            </div>
+                            <div class="bar-fill pro-data" style="width: 100%; background: linear-gradient(135deg, var(--success) 0%, #10b981 100%); display: none;">
+                                <span class="bar-value">120W</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-lightbulb tip-icon"></i>
+                    Pozisyon İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>Aero Hoods Sırrı:</strong> Önkollar yere paralel olmalı, vertical değil</li>
+                    <li><strong>Drops Tekniği:</strong> Dirsekleri bükmek 10W ekstra tasarruf</li>
+                    <li><strong>Antrenman:</strong> Aero pozisyonda 20dk+ alıştırma gerekli</li>
+                    <li><strong>Nefes Alma:</strong> Diyafram nefesi aero pozisyonu korur</li>
+                </ul>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 text-center">Amatör Bisikletçiler (200-300W)</h3>
+
+        <!-- Jant Tipleri -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-circle-notch mr-3"></i>
+                Jant Tipleri ve Aerodinamik Etki
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-700 bg-opacity-50 rounded-lg">
+                    <div class="text-3xl mb-2">⚪</div>
+                    <div class="font-bold">Box Rim</div>
+                    <div class="text-sm text-gray-300">Baseline</div>
+                    <div class="text-lg font-bold text-red-400">0W</div>
+                </div>
+                <div class="text-center p-4 bg-yellow-500 bg-opacity-20 rounded-lg">
+                    <div class="text-3xl mb-2">🟡</div>
+                    <div class="font-bold">30mm Deep</div>
+                    <div class="text-sm text-gray-300">Entry Aero</div>
+                    <div class="amateur-data text-lg font-bold text-yellow-400">3-5W</div>
+                    <div class="pro-data text-lg font-bold text-yellow-400" style="display: none;">5-8W</div>
+                </div>
+                <div class="text-center p-4 bg-blue-500 bg-opacity-20 rounded-lg">
+                    <div class="text-3xl mb-2">🔵</div>
+                    <div class="font-bold">50mm Deep</div>
+                    <div class="text-sm text-gray-300">Mid Aero</div>
+                    <div class="amateur-data text-lg font-bold text-blue-400">6-8W</div>
+                    <div class="pro-data text-lg font-bold text-blue-400" style="display: none;">8-12W</div>
+                </div>
+                <div class="text-center p-4 bg-green-500 bg-opacity-20 rounded-lg">
+                    <div class="text-3xl mb-2">🟢</div>
+                    <div class="font-bold">Disk Jant</div>
+                    <div class="text-sm text-gray-300">Maximum</div>
+                    <div class="amateur-data text-lg font-bold text-green-400">10-15W</div>
+                    <div class="pro-data text-lg font-bold text-green-400" style="display: none;">15-25W</div>
+                </div>
+            </div>
+
+            <div class="tip-box mt-6">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-cog tip-icon"></i>
+                    Jant İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>105% Kuralı:</strong> Jant genişliği lastik genişliğinin %105'i olmalı</li>
+                    <li><strong>Rüzgar Etkisi:</strong> Yan rüzgarda deep section jantlar dikkat gerektirir</li>
+                    <li><strong>Ağırlık vs Aero:</strong> Düz zeminde aero her zaman kazanır</li>
+                    <li><strong>Ön-Arka Kombinasyon:</strong> Önde 50mm, arkada disk optimal</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Kask Analizi -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-hard-hat mr-3"></i>
+                Kask Tipleri ve Performans Etkisi
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="progress-ring" style="--progress-deg: 0deg;">
+                        <div class="progress-ring-circle">
+                            <div class="progress-ring-center">0W</div>
+                        </div>
+                    </div>
+                    <div class="font-bold">Standard Road</div>
+                    <div class="text-sm text-gray-400">Baseline</div>
+                </div>
+                <div class="text-center">
+                    <div class="progress-ring" style="--progress-deg: 108deg;">
+                        <div class="progress-ring-circle">
+                            <div class="progress-ring-center amateur-data">8W</div>
+                            <div class="progress-ring-center pro-data" style="display: none;">12W</div>
+                        </div>
+                    </div>
+                    <div class="font-bold">Basic Aero</div>
+                    <div class="text-sm text-gray-400">Entry Level</div>
+                </div>
+                <div class="text-center">
+                    <div class="progress-ring" style="--progress-deg: 162deg;">
+                        <div class="progress-ring-circle">
+                            <div class="progress-ring-center amateur-data">13W</div>
+                            <div class="progress-ring-center pro-data" style="display: none;">18W</div>
+                        </div>
+                    </div>
+                    <div class="font-bold">Mid-Range Aero</div>
+                    <div class="text-sm text-gray-400">Premium</div>
+                </div>
+                <div class="text-center">
+                    <div class="progress-ring" style="--progress-deg: 252deg;">
+                        <div class="progress-ring-circle">
+                            <div class="progress-ring-center amateur-data">25W</div>
+                            <div class="progress-ring-center pro-data" style="display: none;">35W</div>
+                        </div>
+                    </div>
+                    <div class="font-bold">Long-Tail TT</div>
+                    <div class="text-sm text-gray-400">Maximum</div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-brain tip-icon"></i>
+                    Kask İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>Pozisyon Kritik:</strong> Başı 2-3° aşağı eğmek 5W ekstra tasarruf</li>
+                    <li><strong>Fit Önemi:</strong> Kaşların 1cm üstünde optimal pozisyon</li>
+                    <li><strong>Sakal Etkisi:</strong> 2 günlük sakal 3W drag artışı yaratır</li>
+                    <li><strong>Gözlük Seçimi:</strong> Büyük lensli gözlük 2W drag azaltır</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Vites Grupları Verimliliği -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-cogs mr-3"></i>
+                Vites Grupları Verimliliği
+            </h2>
             <div class="chart-container">
-                <canvas id="amateurChart"></canvas>
+                <div class="bar-chart">
+                    <div class="bar-item">
+                        <div class="bar-label">Entry Level</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 70%; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <span class="bar-value">6-10W Kayıp</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Mid-Range</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 55%; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">
+                                <span class="bar-value">4-8W Kayıp</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">High-End</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 40%; background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);">
+                                <span class="bar-value">3-6W Kayıp</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Pro Level</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 25%; background: linear-gradient(135deg, var(--success) 0%, #059669 100%);">
+                                <span class="bar-value">2-4W Kayıp</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-label">Electronic</div>
+                        <div class="bar-visual">
+                            <div class="bar-fill" style="width: 15%; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                                <span class="bar-value">1-3W Kayıp</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-wrench tip-icon"></i>
+                    Drivetrain İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>Zincir Bakımı:</strong> Kirli zincir 10W kayıp, temiz zincir 2W kayıp</li>
+                    <li><strong>Yağlama:</strong> Her 200km'de bir kuru yağlayıcı kullanın</li>
+                    <li><strong>Cross-chaining:</strong> Kaçının, 5W kayıp yaratır</li>
+                    <li><strong>Optimal Gear:</strong> Büyük zincir halkası + orta kaset en verimli</li>
+                </ul>
             </div>
         </div>
-    </div>
-</section>
 
-<!-- Aerodynamics Deep Dive -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-wind mr-2 text-green-600"></i>Aerodinamik Faktörlerin Detaylı Analizi
-    </h2>
-    
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 text-center">
-            <i class="fas fa-user-astronaut text-4xl mb-3"></i>
-            <h4 class="font-semibold">Sürüş Pozisyonu</h4>
-            <p class="text-2xl font-bold mt-2">90-140W</p>
-            <p class="text-sm opacity-90">Tasarruf (Pro)</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6 text-center">
-            <i class="fas fa-hard-hat text-4xl mb-3"></i>
-            <h4 class="font-semibold">Aero Kask</h4>
-            <p class="text-2xl font-bold mt-2">20-35W</p>
-            <p class="text-sm opacity-90">Tasarruf (Pro)</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 text-center">
-            <i class="fas fa-tshirt text-4xl mb-3"></i>
-            <h4 class="font-semibold">Aero Skinsuit</h4>
-            <p class="text-2xl font-bold mt-2">12-16W</p>
-            <p class="text-sm opacity-90">Tasarruf (Pro)</p>
-        </div>
-        
-        <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg p-6 text-center">
-            <i class="fas fa-circle text-4xl mb-3"></i>
-            <h4 class="font-semibold">Aero Jantlar</h4>
-            <p class="text-2xl font-bold mt-2">8-15W</p>
-            <p class="text-sm opacity-90">Tasarruf (Pro)</p>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-lg card-shadow p-6">
-        <h3 class="text-xl font-semibold mb-4">Aerodinamik Drag Katsayıları ve Pozisyon Etkisi</h3>
-        <div class="chart-container">
-            <canvas id="aeroChart"></canvas>
-        </div>
-        <div class="mt-4 text-sm text-gray-600">
-            <p><strong>Not:</strong> Düz zeminde bisikletçinin karşılaştığı direncin %90'ı aerodinamik kökenlidir.</p>
-        </div>
-    </div>
-</section>
-
-<!-- Weight Effect on Climbing -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-mountain mr-2 text-orange-600"></i>Tırmanışta Ağırlık Etkisi
-    </h2>
-    
-    <div class="grid lg:grid-cols-2 gap-8">
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4">Eğim vs Ağırlık Etkisi (1kg için)</h3>
+        <!-- Lastik Genişliği Analizi -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-circle mr-3"></i>
+                Lastik Genişliği ve Rolling Resistance
+            </h2>
             <div class="chart-container">
-                <canvas id="climbChart"></canvas>
+                <div class="line-chart">
+                    <div class="line-path"></div>
+                    <div class="absolute bottom-4 left-4 text-sm">
+                        <div class="flex items-center space-x-4">
+                            <span>23mm: +3W</span>
+                            <span>25mm: Optimal</span>
+                            <span>28mm: +1W</span>
+                            <span>30mm+: +3W</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                <div class="text-center p-3 bg-red-500 bg-opacity-20 rounded-lg">
+                    <div class="text-2xl font-bold">23mm</div>
+                    <div class="text-red-400">+2-4W RR</div>
+                    <div class="text-sm">Sert, Hızlı</div>
+                </div>
+                <div class="text-center p-3 bg-green-500 bg-opacity-20 rounded-lg">
+                    <div class="text-2xl font-bold">25mm</div>
+                    <div class="text-green-400">Baseline</div>
+                    <div class="text-sm">Optimal</div>
+                </div>
+                <div class="text-center p-3 bg-yellow-500 bg-opacity-20 rounded-lg">
+                    <div class="text-2xl font-bold">28mm</div>
+                    <div class="text-yellow-400">+1-2W RR</div>
+                    <div class="text-sm">Konforlu</div>
+                </div>
+                <div class="text-center p-3 bg-orange-500 bg-opacity-20 rounded-lg">
+                    <div class="text-2xl font-bold">30mm+</div>
+                    <div class="text-orange-400">+2-5W RR</div>
+                    <div class="text-sm">Çok Konforlu</div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-tachometer-alt tip-icon"></i>
+                    Lastik İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>Basınç Kontrolü:</strong> Her 10 psi eksiklik 3-5W ekstra direnç</li>
+                    <li><strong>Tubeless Avantajı:</strong> 5-8W rolling resistance tasarrufu</li>
+                    <li><strong>Sıcaklık Etkisi:</strong> Her 10°C artışta 1 psi basınç artışı</li>
+                    <li><strong>Optimal Basınç:</strong> 25mm lastik için ~85-95 psi</li>
+                </ul>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4">Wisconsin Üniversitesi Araştırması</h3>
+
+        <!-- Ağırlık-Eğim İlişkisi -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-mountain mr-3"></i>
+                Bisiklet Ağırlığı - Eğim İlişkisi (1kg fark için)
+            </h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-center border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-600">
+                            <th class="p-3 font-bold">Eğim (%)</th>
+                            <th class="p-3 font-bold">Ek Güç Gereksinimi</th>
+                            <th class="p-3 font-bold">Tırmanış Tipi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-700">
+                            <td class="p-3">0% (Düz)</td>
+                            <td class="p-3 text-green-400 font-bold">&lt;1W</td>
+                            <td class="p-3 text-gray-400">Düz zemin</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-yellow-500 bg-opacity-10">
+                            <td class="p-3">2-4%</td>
+                            <td class="p-3 text-yellow-400 font-bold">5-8W</td>
+                            <td class="p-3">Hafif eğim</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-orange-500 bg-opacity-10">
+                            <td class="p-3">4-6%</td>
+                            <td class="p-3 text-orange-400 font-bold">8-12W</td>
+                            <td class="p-3">Orta eğim</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-red-500 bg-opacity-10">
+                            <td class="p-3">6-8%</td>
+                            <td class="p-3 text-red-400 font-bold">12-18W</td>
+                            <td class="p-3">Zor eğim</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-red-600 bg-opacity-20">
+                            <td class="p-3">8-10%</td>
+                            <td class="p-3 text-red-300 font-bold">15-25W</td>
+                            <td class="p-3">Çok zor</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-purple-500 bg-opacity-20">
+                            <td class="p-3">10-12%</td>
+                            <td class="p-3 text-purple-300 font-bold">25-35W</td>
+                            <td class="p-3">Ekstrem</td>
+                        </tr>
+                        <tr class="border-b border-gray-700 bg-pink-500 bg-opacity-20">
+                            <td class="p-3">12-15%</td>
+                            <td class="p-3 text-pink-300 font-bold">35-45W</td>
+                            <td class="p-3">Dağcılık</td>
+                        </tr>
+                        <tr class="bg-red-700 bg-opacity-30">
+                            <td class="p-3">15-18%</td>
+                            <td class="p-3 text-red-200 font-bold">50-55W</td>
+                            <td class="p-3">Maksimum</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tip-box">
+                <h4 class="font-bold text-lg mb-2">
+                    <i class="fas fa-weight-hanging tip-icon"></i>
+                    Ağırlık ve Tırmanış İpuçları
+                </h4>
+                <ul class="space-y-2">
+                    <li><strong>Sitting vs Standing:</strong> %6+ eğimde ayakta daha verimli</li>
+                    <li><strong>Ağırlık Dağılımı:</strong> %70 arka, %30 ön tekerlek ideal</li>
+                    <li><strong>Gear Selection:</strong> Düşük kadans (60-70 RPM) tırmanışta better</li>
+                    <li><strong>Öncelik Sırası:</strong> %8+ eğimde ağırlık > aerodinamik</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Maliyet-Fayda Analizi -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-euro-sign mr-3"></i>
+                Maliyet-Fayda Analizi (ROI Sıralaması)
+            </h2>
+            
             <div class="space-y-4">
-                <div class="border-l-4 border-orange-500 pl-4">
-                    <p class="font-semibold text-lg">%16-18 Eğimde Bulgular:</p>
-                    <ul class="mt-2 space-y-2 text-gray-700">
-                        <li><i class="fas fa-bolt text-yellow-500 mr-2"></i>1kg ek ağırlık = <strong>53.77W</strong> ek maksimum güç</li>
-                        <li><i class="fas fa-clock text-blue-500 mr-2"></i>Tırmanış süresi = <strong>21 saniye</strong> uzama</li>
-                        <li><i class="fas fa-chart-line text-green-500 mr-2"></i>Test mesafesi = 1.78 mil (2.86 km)</li>
+                <div class="flex items-center justify-between p-4 bg-green-500 bg-opacity-20 rounded-lg border-l-4 border-green-500">
+                    <div>
+                        <div class="font-bold text-green-400">🥇 Bike Fitting + Pozisyon</div>
+                        <div class="text-sm text-gray-300">Profesyonel bike fitting</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-green-400">150-300€</div>
+                        <div class="amateur-data text-lg text-green-300">30-70W kazanım</div>
+                        <div class="pro-data text-lg text-green-300" style="display: none;">60-120W kazanım</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-yellow-500 bg-opacity-20 rounded-lg border-l-4 border-yellow-500">
+                    <div>
+                        <div class="font-bold text-yellow-400">🥈 Aero Çoraplar</div>
+                        <div class="text-sm text-gray-300">En yüksek ROI ekipman</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-yellow-400">30-50€</div>
+                        <div class="amateur-data text-lg text-yellow-300">2-6W kazanım</div>
+                        <div class="pro-data text-lg text-yellow-300" style="display: none;">4-12W kazanım</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-blue-500 bg-opacity-20 rounded-lg border-l-4 border-blue-500">
+                    <div>
+                        <div class="font-bold text-blue-400">🥉 Aero Kask</div>
+                        <div class="text-sm text-gray-300">Güvenlik + performans</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-blue-400">150-400€</div>
+                        <div class="amateur-data text-lg text-blue-300">8-25W kazanım</div>
+                        <div class="pro-data text-lg text-blue-300" style="display: none;">12-35W kazanım</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-purple-500 bg-opacity-20 rounded-lg border-l-4 border-purple-500">
+                    <div>
+                        <div class="font-bold text-purple-400">4️⃣ Aero Skinsuit</div>
+                        <div class="text-sm text-gray-300">Yarış günü için</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-purple-400">200-500€</div>
+                        <div class="amateur-data text-lg text-purple-300">6-10W kazanım</div>
+                        <div class="pro-data text-lg text-purple-300" style="display: none;">12-16W kazanım</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-indigo-500 bg-opacity-20 rounded-lg border-l-4 border-indigo-500">
+                    <div>
+                        <div class="font-bold text-indigo-400">5️⃣ Aero Jantlar</div>
+                        <div class="text-sm text-gray-300">Uzun vadeli yatırım</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-indigo-400">1000-3000€</div>
+                        <div class="amateur-data text-lg text-indigo-300">4-15W kazanım</div>
+                        <div class="pro-data text-lg text-indigo-300" style="display: none;">8-25W kazanım</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pratik İpuçları Bölümü -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-lightbulb mr-3"></i>
+                Gelişmiş Pratik İpuçları
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="tip-box">
+                    <h4 class="font-bold text-lg mb-3">
+                        <i class="fas fa-tools tip-icon"></i>
+                        Bike Fitting Sırları
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>• <strong>Saddle Yüksekliği:</strong> Topuk pedalda, bacak tam düz</li>
+                        <li>• <strong>Reach Ayarı:</strong> Dirsek 5-10° bükümlü olmalı</li>
+                        <li>• <strong>Cleat Pozisyonu:</strong> Ayağın en geniş yerinde</li>
+                        <li>• <strong>Q-Factor:</strong> Dizler çerçeveye paralel</li>
                     </ul>
                 </div>
-                
-                <div class="bg-orange-50 p-4 rounded-lg">
-                    <h4 class="font-semibold text-orange-800 mb-2">Pratik Sonuç:</h4>
-                    <p class="text-orange-700">Eğim arttıkça ağırlık farkının etkisi katlanarak artar. Düz zeminde minimal olan ağırlık etkisi, dik yokuşlarda kritik hale gelir.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Equipment ROI Analysis -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-dollar-sign mr-2 text-green-600"></i>Yatırım Getirisi (ROI) Analizi
-    </h2>
-    
-    <div class="bg-white rounded-lg card-shadow p-6">
-        <div class="chart-container">
-            <canvas id="roiChart"></canvas>
-        </div>
-        
-        <div class="grid md:grid-cols-3 gap-6 mt-6">
-            <div class="text-center">
-                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <i class="fas fa-trophy text-green-600 text-2xl"></i>
+                <div class="tip-box">
+                    <h4 class="font-bold text-lg mb-3">
+                        <i class="fas fa-wind tip-icon"></i>
+                        Aerodinamik Sırlar
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>• <strong>Skinsuit Fit:</strong> Hava cebi yaratmayacak kadar sıkı</li>
+                        <li>• <strong>Kıyafet Detayı:</strong> Açık fermuarlar 2W drag artışı</li>
+                        <li>• <strong>Ayakkabı Kapağı:</strong> Velcro şeritler 1W drag</li>
+                        <li>• <strong>Saç Etkisi:</strong> Uzun saç 2W drag artışı</li>
+                    </ul>
                 </div>
-                <h4 class="font-semibold text-green-800">Yüksek ROI</h4>
-                <p class="text-sm text-gray-600 mt-1">Pozisyon, Aero Çoraplar, Lastik Basıncı</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="bg-yellow-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <i class="fas fa-medal text-yellow-600 text-2xl"></i>
-                </div>
-                <h4 class="font-semibold text-yellow-800">Orta ROI</h4>
-                <p class="text-sm text-gray-600 mt-1">Aero Kask, Skinsuit, Drivetrain</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                    <i class="fas fa-star text-red-600 text-2xl"></i>
-                </div>
-                <h4 class="font-semibold text-red-800">Düşük ROI</h4>
-                <p class="text-sm text-gray-600 mt-1">Aero Jantlar, Kadro Upgrade</p>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Detailed Performance Table -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-table mr-2 text-indigo-600"></i>Detaylı Performans Karşılaştırması
-    </h2>
-    
-    <div class="bg-white rounded-lg card-shadow overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Faktör</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Profesyonel (W)</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Amatör (W)</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Maliyet</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ROI</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr class="bg-green-50">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Sürüş Pozisyonu</td>
-                        <td class="px-6 py-4 text-center text-2xl font-bold text-green-600">90-140</td>
-                        <td class="px-6 py-4 text-center text-xl font-bold text-green-600">30-70</td>
-                        <td class="px-6 py-4 text-center text-green-600 font-medium">Ücretsiz</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Çok Yüksek</span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Aero Kask</td>
-                        <td class="px-6 py-4 text-center text-xl font-bold text-blue-600">20-35</td>
-                        <td class="px-6 py-4 text-center font-bold text-blue-600">9-14</td>
-                        <td class="px-6 py-4 text-center text-gray-600">$150-400</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Yüksek</span></td>
-                    </tr>
-                    <tr class="bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Aero Skinsuit</td>
-                        <td class="px-6 py-4 text-center text-lg font-bold text-purple-600">12-16</td>
-                        <td class="px-6 py-4 text-center font-bold text-purple-600">6-10</td>
-                        <td class="px-6 py-4 text-center text-gray-600">$200-500</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Yüksek</span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Aero Jantlar</td>
-                        <td class="px-6 py-4 text-center font-bold text-red-600">8-15</td>
-                        <td class="px-6 py-4 text-center font-bold text-red-600">4-8</td>
-                        <td class="px-6 py-4 text-center text-gray-600">$1000-3000</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Düşük</span></td>
-                    </tr>
-                    <tr class="bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Aero Çoraplar</td>
-                        <td class="px-6 py-4 text-center font-bold text-teal-600">4-12</td>
-                        <td class="px-6 py-4 text-center font-bold text-teal-600">2-6</td>
-                        <td class="px-6 py-4 text-center text-gray-600">$30-50</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Çok Yüksek</span></td>
-                    </tr>
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">Drivetrain Optimizasyonu</td>
-                        <td class="px-6 py-4 text-center font-bold text-orange-600">8-12</td>
-                        <td class="px-6 py-4 text-center font-bold text-orange-600">4-6</td>
-                        <td class="px-6 py-4 text-center text-gray-600">$20-50</td>
-                        <td class="px-6 py-4 text-center"><span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Çok Yüksek</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
+                <div class="tip-box">
+                    <h4 class="font-bold text-lg mb-3">
+                        <i class="fas fa-cog tip-icon"></i>
+                        Teknik İpuçları
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>• <strong>Cadence:</strong> 90-100 RPM aero pozisyonda optimal</li>
+                        <li>• <strong>Pedal Tekniği:</strong> 12-6 saat arası güç uygulaması</li>
+                        <li>• <strong>Zincir Değişimi:</strong> %0.5 uzama = 2W kayıp</li>
+                        <li>• <strong>Optimal Power:</strong> Sürekli güç > anlık güç patlamaları</li>
+                    </ul>
+                </div>
 
-<!-- Key Insights -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>Ana Bulgular ve Öneriler
-    </h2>
-    
-    <div class="grid md:grid-cols-2 gap-8">
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 flex items-center">
-                <i class="fas fa-graduation-cap text-blue-600 mr-2"></i>Amatör Bisikletçiler İçin
-            </h3>
-            <div class="space-y-3">
-                <div class="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">1</span>
-                    <span>Pozisyon eğitimi/profesyonel bike fitting</span>
+                <div class="tip-box">
+                    <h4 class="font-bold text-lg mb-3">
+                        <i class="fas fa-brain tip-icon"></i>
+                        Mental İpuçları
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>• <strong>Antrenman:</strong> Aero pozisyonda 20dk+ alıştırma</li>
+                        <li>• <strong>Nefes Alma:</strong> Diyafram nefesi pozisyonu korur</li>
+                        <li>• <strong>Görsel:</strong> Yol çizgisine 3-5m odaklanma</li>
+                        <li>• <strong>Rahatlık:</strong> Gergin kaslar 5W+ enerji tüketir</li>
+                    </ul>
                 </div>
-                <div class="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">2</span>
-                    <span>Aero kask alımı (en yüksek fayda/maliyet)</span>
-                </div>
-                <div class="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">3</span>
-                    <span>Aero çoraplar (düşük maliyet, yüksek fayda)</span>
-                </div>
-                <div class="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">4</span>
-                    <span>Düzenli drivetrain bakımı</span>
-                </div>
-            </div>
-            <div class="mt-4 p-4 bg-green-100 rounded-lg">
-                <p class="text-green-800 font-medium">Toplam Potansiyel: 50-100W iyileştirme</p>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg card-shadow p-6">
-            <h3 class="text-xl font-semibold mb-4 flex items-center">
-                <i class="fas fa-trophy text-gold-600 mr-2" style="color: #D4AF37;"></i>Profesyonel/Yarışmacılar İçin
-            </h3>
-            <div class="space-y-3">
-                <div class="flex items-center p-3 bg-purple-50 rounded-lg">
-                    <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">1</span>
-                    <span>Profesyonel bike fitting ve pozisyon optimizasyonu</span>
-                </div>
-                <div class="flex items-center p-3 bg-purple-50 rounded-lg">
-                    <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">2</span>
-                    <span>Tam aero ekipman seti (kask, skinsuit, çoraplar)</span>
-                </div>
-                <div class="flex items-center p-3 bg-purple-50 rounded-lg">
-                    <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">3</span>
-                    <span>Aero jantlar (disk/deep-section)</span>
-                </div>
-                <div class="flex items-center p-3 bg-purple-50 rounded-lg">
-                    <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mr-3">4</span>
-                    <span>Marginal gains (ağırlık optimizasyonu, komponentler)</span>
-                </div>
-            </div>
-            <div class="mt-4 p-4 bg-green-100 rounded-lg">
-                <p class="text-green-800 font-medium">Toplam Potansiyel: 80-200W iyileştirme</p>
-            </div>
-        </div>
-    </div>
-</section>
 
-<!-- Scientific Methodology -->
-<section class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-microscope mr-2 text-purple-600"></i>Bilimsel Metodoloji
-    </h2>
-    
-    <div class="bg-white rounded-lg card-shadow p-6">
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="text-center">
-                <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-flask text-purple-600 text-2xl"></i>
-                </div>
-                <h4 class="font-semibold text-purple-800 mb-2">Rüzgar Tüneli Testleri</h4>
-                <p class="text-sm text-gray-600">MIT, Sports Engineering dergileri ve uluslararası araştırma kurumlarından elde edilen rüzgar tüneli verileri</p>
-            </div>
+        <!-- Sonuç ve Öncelikler -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text text-center">
+                <i class="fas fa-flag-checkered mr-3"></i>
+                Öncelik Sıralaması ve Sonuç
+            </h2>
             
-            <div class="text-center">
-                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-chart-line text-blue-600 text-2xl"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-green-400">
+                        <i class="fas fa-user mr-2"></i>Amatör Bisikletçiler İçin
+                    </h3>
+                    <ol class="space-y-3">
+                        <li class="flex items-center">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">1</span>
+                            <div>
+                                <div class="font-bold">Bike Fitting</div>
+                                <div class="text-sm text-gray-400">30-70W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">2</span>
+                            <div>
+                                <div class="font-bold">Aero Kask</div>
+                                <div class="text-sm text-gray-400">8-25W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">3</span>
+                            <div>
+                                <div class="font-bold">Aero Çoraplar</div>
+                                <div class="text-sm text-gray-400">2-6W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">4</span>
+                            <div>
+                                <div class="font-bold">Drivetrain Bakımı</div>
+                                <div class="text-sm text-gray-400">4-6W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">5</span>
+                            <div>
+                                <div class="font-bold">Lastik Optimizasyonu</div>
+                                <div class="text-sm text-gray-400">1-4W kazanım</div>
+                            </div>
+                        </li>
+                    </ol>
                 </div>
-                <h4 class="font-semibold text-blue-800 mb-2">Power Meter Analizleri</h4>
-                <p class="text-sm text-gray-600">SRM, PowerTap ve diğer güç ölçüm cihazlarıyla yapılan karşılaştırmalı performans testleri</p>
-            </div>
-            
-            <div class="text-center">
-                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
-                    <i class="fas fa-university text-green-600 text-2xl"></i>
-                </div>
-                <h4 class="font-semibold text-green-800 mb-2">Akademik Çalışmalar</h4>
-                <p class="text-sm text-gray-600">Peer-reviewed akademik makaleler, üniversite araştırmaları ve klinik deneylerden nicel veriler</p>
-            </div>
-        </div>
-        
-        <div class="mt-8 p-6 bg-gray-50 rounded-lg">
-            <h4 class="font-semibold text-gray-800 mb-3">Veri Kalite Standartları:</h4>
-            <ul class="space-y-2 text-gray-700">
-                <li><i class="fas fa-check-circle text-green-500 mr-2"></i>Sadece hakemli akademik yayınlardan alınan veriler</li>
-                <li><i class="fas fa-check-circle text-green-500 mr-2"></i>Kontrollü laboratuvar koşullarında yapılan testler</li>
-                <li><i class="fas fa-check-circle text-green-500 mr-2"></i>İstatistiksel olarak anlamlı örneklem büyüklükleri</li>
-                <li><i class="fas fa-check-circle text-green-500 mr-2"></i>Tekrarlanabilir test protokolleri</li>
-            </ul>
-        </div>
-    </div>
-</section>
 
-<!-- References -->
-<section class="mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">
-        <i class="fas fa-book mr-2 text-indigo-600"></i>Kaynaklar ve Referanslar
-    </h2>
-    
-    <div class="bg-white rounded-lg card-shadow p-6">
-        <div class="space-y-4 text-sm">
-            <div class="border-l-4 border-blue-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Aerodinamik Araştırmaları:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Crouch, T.N., Burton, D., LaBry, Z.A., Blair, K.B. (2017). "Riding against the wind: a review of competition cycling aerodynamics." <em>Sports Engineering</em>, Springer. DOI: 10.1007/s12283-017-0234-1</li>
-                    <li>• Lukes, R.A., Chin, S.B., Haake, S.J. (2005). "The understanding and development of cycling aerodynamics." <em>Sports Engineering</em>, Springer.</li>
-                    <li>• García-López, J., Rodríguez-Marroyo, J.A., et al. (2008). "Reference values and improvement of aerodynamic drag in professional cyclists." <em>Journal of Sports Sciences</em>, Taylor & Francis.</li>
-                </ul>
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-purple-400">
+                        <i class="fas fa-trophy mr-2"></i>Profesyonel Bisikletçiler İçin
+                    </h3>
+                    <ol class="space-y-3">
+                        <li class="flex items-center">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">1</span>
+                            <div>
+                                <div class="font-bold">Pozisyon Optimizasyonu</div>
+                                <div class="text-sm text-gray-400">60-120W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">2</span>
+                            <div>
+                                <div class="font-bold">Aero Ekipman Seti</div>
+                                <div class="text-sm text-gray-400">25-50W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">3</span>
+                            <div>
+                                <div class="font-bold">Aero Jantlar</div>
+                                <div class="text-sm text-gray-400">8-25W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">4</span>
+                            <div>
+                                <div class="font-bold">Marginal Gains</div>
+                                <div class="text-sm text-gray-400">5-15W kazanım</div>
+                            </div>
+                        </li>
+                        <li class="flex items-center">
+                            <span class="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">5</span>
+                            <div>
+                                <div class="font-bold">Ağırlık Optimizasyonu</div>
+                                <div class="text-sm text-gray-400">Sadece tırmanış</div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
             </div>
-            
-            <div class="border-l-4 border-green-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Kask Performansı:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Sidelko, S. (2007). "Benchmark of Aerodynamic Cycling Helmets Using a Refined Wind Tunnel Test Protocol for Helmet Drag Research." <em>MIT Mechanical Engineering Department</em>, Bachelor's Thesis.</li>
-                    <li>• Brownlie, L., Ostafichuk, P., Tews, E., et al. (2010). "The wind-averaged aerodynamic drag of competitive time trial cycling helmets." <em>Procedia Engineering</em>, Elsevier.</li>
-                </ul>
-            </div>
-            
-            <div class="border-l-4 border-orange-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Ağırlık ve Tırmanış:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Wood, B.M. (2007). "Power development in hill climbing as a function of bicycle weight." <em>University of Wisconsin</em>, Master's Thesis.</li>
-                    <li>• Nevill, A.M., Jobson, S.A., Davison, R.C.R. (2006). "Optimal power-to-mass ratios when predicting flat and hill-climbing time-trial cycling." <em>European Journal of Applied Physiology</em>, Springer.</li>
-                </ul>
-            </div>
-            
-            <div class="border-l-4 border-purple-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Drivetrain Verimliliği:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Rohloff, B., Greb, P. (2004). "Efficiency measurements of bicycle transmissions-a neverending story?" <em>Human Power Technical Journal</em>, WHPVA.</li>
-                    <li>• Dowd, T., Cavanaugh, P., Mansson, J.A. (2024). "A novel model for bicycle drivetrain efficiency." <em>Sports Engineering</em>, Springer.</li>
-                </ul>
-            </div>
-            
-            <div class="border-l-4 border-red-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Rolling Resistance ve Lastikler:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Grappe, F., Candau, R., Barbier, B., et al. (1999). "Influence of tyre pressure and vertical load on coefficient of rolling resistance and simulated cycling performance." <em>Ergonomics</em>, Taylor & Francis.</li>
-                </ul>
-            </div>
-            
-            <div class="border-l-4 border-teal-500 pl-4">
-                <h4 class="font-semibold text-gray-800">Aero Ekipmanlar:</h4>
-                <ul class="mt-2 space-y-1 text-gray-700">
-                    <li>• Rule 28 Aero Research. "Aero Sock Testing." <em>Technical Report</em>, 2024.</li>
-                    <li>• VeloToze. "Aero Socks Performance Data." <em>Wind Tunnel Test Results</em>, 2024.</li>
-                    <li>• Swiss Side. "AERO Socks Technical Specifications." <em>Product Testing Report</em>, 2024.</li>
-                </ul>
+
+            <div class="mt-8 p-6 bg-gradient-to-r from-green-500 to-blue-500 bg-opacity-20 rounded-lg text-center">
+                <h3 class="text-2xl font-bold mb-3">Toplam Performans Potansiyeli</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="text-3xl font-bold text-green-400 amateur-data">50-100W</div>
+                        <div class="pro-data text-3xl font-bold text-green-400" style="display: none;">80-200W</div>
+                        <div class="text-lg">Toplam İyileştirme</div>
+                    </div>
+                    <div>
+                        <div class="amateur-data text-3xl font-bold text-blue-400">2-4 km/h</div>
+                        <div class="pro-data text-3xl font-bold text-blue-400" style="display: none;">3-6 km/h</div>
+                        <div class="text-lg">Hız Artışı (40km/h'de)</div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p class="text-xs text-gray-600 text-center">
-                <i class="fas fa-info-circle mr-1"></i>
-                Tüm veriler hakemli akademik yayınlar, üniversite araştırmaları ve klinik deneylerden alınmıştır. 
-                Detaylı kaynak listesi ve metodoloji açıklamaları için orijinal yayınlara başvurunuz.
+
+        <!-- Bilimsel Referanslar -->
+        <div class="card fade-in">
+            <h2 class="text-2xl font-bold mb-6 gradient-text">
+                <i class="fas fa-book mr-3"></i>
+                Bilimsel Referanslar
+            </h2>
+            
+            <div class="space-y-4">
+                <div class="reference-item">
+                    <strong>Crouch, T.N., Burton, D., LaBry, Z.A., Blair, K.B. (2017)</strong><br>
+                    "Riding against the wind: a review of competition cycling aerodynamics"<br>
+                    <em>Sports Engineering, 20(2), 81-110</em><br>
+                    <a href="https://link.springer.com/content/pdf/10.1007/s12283-017-0234-1.pdf" class="text-blue-400 hover:underline" target="_blank">
+                        <i class="fas fa-external-link-alt mr-1"></i>Makaleyi İncele
+                    </a>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Sidelko, S. (2007)</strong><br>
+                    "Benchmark of Aerodynamic Cycling Helmets Using a Refined Wind Tunnel Test Protocol"<br>
+                    <em>MIT Mechanical Engineering Thesis</em><br>
+                    <a href="https://dspace.mit.edu/bitstream/handle/1721.1/40486/191803811-MIT.pdf" class="text-blue-400 hover:underline" target="_blank">
+                        <i class="fas fa-external-link-alt mr-1"></i>Tezi İncele
+                    </a>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Wood, B.M. (2007)</strong><br>
+                    "Power development in hill climbing as a function of bicycle weight"<br>
+                    <em>University of Wisconsin-La Crosse</em><br>
+                    <a href="https://minds.wisconsin.edu/bitstream/handle/1793/7218/Wood2007.pdf" class="text-blue-400 hover:underline" target="_blank">
+                        <i class="fas fa-external-link-alt mr-1"></i>Araştırmayı İncele
+                    </a>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Rohloff, B., Greb, P. (2004)</strong><br>
+                    "Efficiency measurements of bicycle transmissions-a neverending story?"<br>
+                    <em>Human Power, Technical Report</em><br>
+                    <a href="http://www.whpva.org/HParchive/hp55p11-15.pdf" class="text-blue-400 hover:underline" target="_blank">
+                        <i class="fas fa-external-link-alt mr-1"></i>Raporu İncele
+                    </a>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Lukes, R.A., Chin, S.B., Haake, S.J. (2005)</strong><br>
+                    "The understanding and development of cycling aerodynamics"<br>
+                    <em>Sports Engineering, 8(2), 59-74</em>
+                </div>
+
+                <div class="reference-item">
+                    <strong>García-López, J., Rodríguez-Marroyo, J.A., et al. (2008)</strong><br>
+                    "Reference values and improvement of aerodynamic drag in professional cyclists"<br>
+                    <em>Journal of Sports Sciences, 26(3), 277-286</em>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Martin, J.C., Davidson, C.J., Pardyjak, E.R. (2007)</strong><br>
+                    "Understanding sprint-cycling performance: the integration of muscle power, resistance, and modeling"<br>
+                    <em>International Journal of Sports Physiology and Performance, 2(1), 5-21</em>
+                </div>
+
+                <div class="reference-item">
+                    <strong>Grappe, F., Candau, R., Barbier, B., et al. (1999)</strong><br>
+                    "Influence of tyre pressure and vertical load on coefficient of rolling resistance"<br>
+                    <em>Ergonomics, 42(4), 663-678</em>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-8">
+            <p class="text-gray-400">
+                <i class="fas fa-copyright mr-2"></i>
+                2024 - Bilimsel verilerle desteklenmiş bisiklet performans analizi
+            </p>
+            <p class="text-sm text-gray-500 mt-2">
+                Bu analiz sürekli güncellenen bilimsel araştırmalara dayanmaktadır.
             </p>
         </div>
-    </div>
-</section>
+    </main>
 
-</div>
-
-<!-- Footer -->
-<footer class="bg-gray-800 text-white py-8 mt-12">
-    <div class="container mx-auto px-4 text-center">
-        <p class="mb-2"><i class="fas fa-copyright mr-1"></i> 2025 Ümit Emre Erdoğan - Bisiklet Performansı Optimizasyonu</p>
-        <p class="text-gray-400 text-sm">Bilimsel verilerle desteklenmiş kapsamlı performans rehberi</p>
-        <div class="mt-4 flex justify-center space-x-4 text-sm text-gray-400">
-            <span><i class="fas fa-flask mr-1"></i>Bilimsel Analiz</span>
-            <span><i class="fas fa-chart-bar mr-1"></i>Veri Görselleştirme</span>
-            <span><i class="fas fa-mobile-alt mr-1"></i>Mobil Uyumlu</span>
-        </div>
-    </div>
-</footer>
-
-<script>
-// Professional Cyclist Performance Chart
-const proCtx = document.getElementById('proChart').getContext('2d');
-new Chart(proCtx, {
-    type: 'bar',
-    data: {
-        labels: ['Sürüş Pozisyonu', 'Aero Kask', 'Aero Skinsuit', 'Aero Jantlar', 'Drivetrain', 'Aero Çoraplar', 'Lastik Opt.'],
-        datasets: [{
-            label: 'Güç Tasarrufu (Watt)',
-            data: [115, 27.5, 14, 11.5, 10, 8, 5],
-            backgroundColor: [
-                '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', 
-                '#EF4444', '#06B6D4', '#84CC16'
-            ],
-            borderRadius: 6
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            title: {
-                display: true,
-                text: 'Ortalama Güç Tasarrufu (Profesyonel)'
+    <script>
+        let lastScrollTop = 0;
+        const header = document.querySelector('.header');
+        
+        // Header scroll behavior
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
             }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Watt Tasarrufu' }
+            
+            if (scrollTop > lastScrollTop && scrollTop > 200) {
+                // Scrolling down
+                header.classList.add('hidden');
+            } else {
+                // Scrolling up
+                header.classList.remove('hidden');
+            }
+            
+            lastScrollTop = scrollTop;
+        });
+
+        // Mode switching
+        function switchMode(mode) {
+            const amateurElements = document.querySelectorAll('.amateur-data');
+            const proElements = document.querySelectorAll('.pro-data');
+            const amateurBtn = document.getElementById('amateurBtn');
+            const proBtn = document.getElementById('proBtn');
+
+            if (mode === 'amateur') {
+                amateurElements.forEach(el => el.style.display = 'block');
+                proElements.forEach(el => el.style.display = 'none');
+                amateurBtn.classList.add('active');
+                proBtn.classList.remove('active');
+            } else {
+                amateurElements.forEach(el => el.style.display = 'none');
+                proElements.forEach(el => el.style.display = 'block');
+                amateurBtn.classList.remove('active');
+                proBtn.classList.add('active');
             }
         }
-    }
-});
 
-// Amateur Cyclist Performance Chart
-const amateurCtx = document.getElementById('amateurChart').getContext('2d');
-new Chart(amateurCtx, {
-    type: 'bar',
-    data: {
-        labels: ['Sürüş Pozisyonu', 'Aero Kask', 'Aero Skinsuit', 'Aero Jantlar', 'Drivetrain', 'Aero Çoraplar', 'Lastik Opt.'],
-        datasets: [{
-            label: 'Güç Tasarrufu (Watt)',
-            data: [50, 11.5, 8, 6, 5, 4, 2.5],
-            backgroundColor: [
-                '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', 
-                '#EF4444', '#06B6D4', '#84CC16'
-            ],
-            borderRadius: 6
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            title: {
-                display: true,
-                text: 'Ortalama Güç Tasarrufu (Amatör)'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Watt Tasarrufu' }
-            }
-        }
-    }
-});
+        // Initialize animations on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
 
-// Aerodynamic Position Effect Chart
-const aeroCtx = document.getElementById('aeroChart').getContext('2d');
-new Chart(aeroCtx, {
-    type: 'line',
-    data: {
-        labels: ['Dik Pozisyon', 'Fren Başları', 'Drops', 'Time Trial'],
-        datasets: [{
-            label: 'Drag Katsayısı (CdA)',
-            data: [1.0, 0.85, 0.75, 0.65],
-            borderColor: '#3B82F6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            fill: true,
-            tension: 0.4
-        }, {
-            label: 'Güç Tasarrufu (%)',
-            data: [0, 15, 25, 35],
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            fill: false,
-            yAxisID: 'y1'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: 'CdA' }
-            },
-            y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                title: { display: true, text: 'Tasarruf (%)' },
-                grid: { drawOnChartArea: false }
-            }
-        }
-    }
-});
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
 
-// Climbing Weight Effect Chart
-const climbCtx = document.getElementById('climbChart').getContext('2d');
-new Chart(climbCtx, {
-    type: 'line',
-    data: {
-        labels: ['Düz (0%)', '4-6%', '8-10%', '12-15%', '16-18%'],
-        datasets: [{
-            label: 'Ek Güç Gereksinimi (W)',
-            data: [1, 10, 20, 40, 54],
-            borderColor: '#F59E0B',
-            backgroundColor: 'rgba(245, 158, 11, 0.2)',
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#F59E0B',
-            pointRadius: 6
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            title: {
-                display: true,
-                text: '1kg Ek Ağırlığın Etkisi'
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: { display: true, text: 'Ek Güç (Watt)' }
-            },
-            x: {
-                title: { display: true, text: 'Yol Eğimi' }
-            }
-        }
-    }
-});
+        // Observe all cards
+        document.querySelectorAll('.card').forEach(card => {
+            observer.observe(card);
+        });
 
-// ROI Analysis Chart
-const roiCtx = document.getElementById('roiChart').getContext('2d');
-new Chart(roiCtx, {
-    type: 'scatter',
-    data: {
-        datasets: [{
-            label: 'Yüksek ROI',
-            data: [
-                { x: 0, y: 115 },    // Pozisyon
-                { x: 40, y: 8 },     // Aero çoraplar
-                { x: 35, y: 5 }      // Lastik basıncı
-            ],
-            backgroundColor: '#10B981',
-            pointRadius: 8
-        }, {
-            label: 'Orta ROI',
-            data: [
-                { x: 275, y: 27.5 }, // Kask
-                { x: 350, y: 14 },   // Skinsuit
-                { x: 35, y: 10 }     // Drivetrain
-            ],
-            backgroundColor: '#F59E0B',
-            pointRadius: 8
-        }, {
-            label: 'Düşük ROI',
-            data: [
-                { x: 2000, y: 11.5 }, // Jantlar
-                { x: 5000, y: 2 }      // Kadro
-            ],
-            backgroundColor: '#EF4444',
-            pointRadius: 8
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            title: {
-                display: true,
-                text: 'Yatırım Getirisi Analizi (Maliyet vs Fayda)'
-            }
-        },
-        scales: {
-            x: {
-                title: { display: true, text: 'Maliyet ($)' },
-                type: 'logarithmic'
-            },
-            y: {
-                title: { display: true, text: 'Güç Tasarrufu (W)' },
-                beginAtZero: true
-            }
-        }
-    }
-});
-</script>
+        // Animate bars on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.querySelectorAll('.bar-fill').forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }, 500);
+        });
 
+        // Smooth scrolling for better UX
+        document.documentElement.style.scrollBehavior = 'smooth';
+    </script>
 </body>
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDnIrwzGRA4esIbulyL52xMLUE8LYeSxNYKkWmfOWBCfiDXkomNkYFV%2BNniGDIlOkNTDU%2B2BWAq%2B1R5Qg6X525FL5ch0Utrxrrm2J5gFJ5u5%2F0Wpt%2FIY8WxcD3gGv5XmMRZDP25eI0LP7yyrs9jQADdKKdaoEYRBc2rq%2B0zrjWIGWvwDhNJG1taUXCqvUMlQYaEW3DY0l5JnzeIYwfDOO6GsEhBqcvd%2FcISky%2FCNJdCYJ7ocKjiSoz9G44aMMGfJiTEnU5oNct8FFL2vlFq4k7z3Szgny6NYBDCM%2BS1N%2F2%2BxtKLgYIdsLu8U0x8XXV2Zylc%2BxKkYrO8DgBYNIDnVdnURkallvkQdUZdikmwZ%2BVQ%2FSbLOdyWY6BPY78H0Zort4YRWxr%2FbVBDLEzy4DAkgQYA%2BjLr7761XmmpRElYVhXNaqMAcUJoGABecgnmiksYDAEIy3kxDp1t7BGJ8lvHRFeGkMzpC5oMU3QH9R%2FC1htyG1WCWhG9I1t4rxy2N3U0CopYh7ISU3%2B8t%2BBVFNSooriH8%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDmA%2FTHELtr81vEekYO9OgRoaZkhrdVyIXmYHLrq%2F5K6gxDB9Vo%2Fi0AejJwReZiUctgbdz6tQ6VX5HbGGHaDqUlaXEE2EOf%2Bn6MtD7OBk9PHHReOUkuycTwLOLatD7VcVOowr%2FxvgF3w7d4Ju%2BCJOmv29gJQn1m7i2ESki8%2FTaeHoVoWHAVDH5FiJS1VAlzMLSHZEuGRQ2xwWV5j3V8za535v%2FOKvPJQ3r4nmEtre6ZHIzRPQsxz4v1NE8qlqZC3uroZyqMEHh%2FWVHmEJOGvTO%2BGIzUu0csU8Qpqc967R7yV8LfrTVcQdtvZesFiOvXK9arzqi63RazSanlDg%2FtnoozPuNkvHWnbJRRUABVYyCRTdEL9pe0jdbrEH2DfMD7mTLZ2qL5X15bk2RzNbF6E2JbhAgzwzqYWJ4XkVhMb29FopcFZWcTFElX%2FH%2B92CsULFuNWNg0xAdtDpIxyOZ8BUE69Ukg%2BUsTqDr2Vr4XONUb8ievOJ6nw0dCAQOxWuGIP5nD9ONyMMjcBw9OocsCQDkEE%3D";
         window.__genspark_locale = "en-US";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDnIrwzGRA4esIbulyL52xMLUE8LYeSxNYKkWmfOWBCfiDXkomNkYFV+NniGDIlOkNTDU+2BWAq+1R5Qg6X525FL5ch0Utrxrrm2J5gFJ5u5/0Wpt/IY8WxcD3gGv5XmMRZDP25eI0LP7yyrs9jQADdKKdaoEYRBc2rq+0zrjWIGWvwDhNJG1taUXCqvUMlQYaEW3DY0l5JnzeIYwfDOO6GsEhBqcvd/cISky/CNJdCYJ7ocKjiSoz9G44aMMGfJiTEnU5oNct8FFL2vlFq4k7z3Szgny6NYBDCM+S1N/2+xtKLgYIdsLu8U0x8XXV2Zylc+xKkYrO8DgBYNIDnVdnURkallvkQdUZdikmwZ+VQ/SbLOdyWY6BPY78H0Zort4YRWxr/bVBDLEzy4DAkgQYA+jLr7761XmmpRElYVhXNaqMAcUJoGABecgnmiksYDAEIy3kxDp1t7BGJ8lvHRFeGkMzpC5oMU3QH9R/C1htyG1WCWhG9I1t4rxy2N3U0CopYh7ISU3+8t+BVFNSooriH8=";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDmA/THELtr81vEekYO9OgRoaZkhrdVyIXmYHLrq/5K6gxDB9Vo/i0AejJwReZiUctgbdz6tQ6VX5HbGGHaDqUlaXEE2EOf+n6MtD7OBk9PHHReOUkuycTwLOLatD7VcVOowr/xvgF3w7d4Ju+CJOmv29gJQn1m7i2ESki8/TaeHoVoWHAVDH5FiJS1VAlzMLSHZEuGRQ2xwWV5j3V8za535v/OKvPJQ3r4nmEtre6ZHIzRPQsxz4v1NE8qlqZC3uroZyqMEHh/WVHmEJOGvTO+GIzUu0csU8Qpqc967R7yV8LfrTVcQdtvZesFiOvXK9arzqi63RazSanlDg/tnoozPuNkvHWnbJRRUABVYyCRTdEL9pe0jdbrEH2DfMD7mTLZ2qL5X15bk2RzNbF6E2JbhAgzwzqYWJ4XkVhMb29FopcFZWcTFElX/H+92CsULFuNWNg0xAdtDpIxyOZ8BUE69Ukg+UsTqDr2Vr4XONUb8ievOJ6nw0dCAQOxWuGIP5nD9ONyMMjcBw9OocsCQDkEE=";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
